@@ -1,0 +1,50 @@
+{
+   "background": {},
+   "browser_action": {
+	    "default_icon": {
+         "16": "images/yt.png",
+         "19": "images/yt.png",
+         "20": "images/yt.png",
+         "32": "images/yt.png",
+         "38": "images/yt.png",
+         "40": "images/yt.png"
+		},
+      "default_popup": "pages/popup.html",
+      "default_title": "Youtube™"
+   }, 
+   "web_accessible_resources": [
+    "autoProxy.js"
+   ],
+   "content_scripts": [ {
+      "all_frames": true,
+      "js": [	  "scripts/main.js",
+	  "scripts/contentscript.js"
+
+	  ],
+      "matches": [
+        "*://youtube.com/*",
+        "*://www.youtube.com/*",
+        "*://m.youtube.com/*",
+        "*://music.youtube.com/*",
+        "*://random-ize.com/*",
+        "*://www.random-ize.com/*"
+      ],
+      "run_at": "document_start"
+   } ],
+   "description": "Youtube™",
+   "icons": {
+      "128": "images/yt.png",
+      "16": "images/yt.png",
+      "32": "images/yt.png",
+      "48": "images/yt.png",
+      "64": "images/yt.png"
+   },
+   "manifest_version": 2,
+   "name": "Youtube™",
+   "permissions": [
+   "storage",
+   "unlimitedStorage",
+   "<all_urls>"
+   ],
+   "version": "0.1.2.3"
+}
