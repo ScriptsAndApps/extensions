@@ -3,64 +3,173 @@
 var hasInjected = false;
 var hasListener = false;
 var injectedage = false;
+var doFullscreen = false;
+var doFullscreenenabed = false;
+var isnstantplayactive = false;
+var thisappisdiasables = false;
 
-setInterval(randomizerloop, 2000);
-setInterval(skippopup, 2000);
+var intervalonvde = 0;
+var intervalcntp = 0;
+var intervalrandom = 0;
+var intervalskipp = 0;
+
+intervalrandom = setInterval(randomizerloop, 2000);
+intervalskipp = setInterval(skippopup, 2000);
+
 _handle = _handle.bind(document);
 chrome.runtime.onMessage.addListener(_handle);
 
+
+var enabledinstanew = false;
+var enabledskip = false;
+var enabledageres  = false;
+
 function _handle({ action, payload }) {
     if (action === "CHANGE_SETTINGS") {
-	//"autoplay", "instantnew","autofullscreennew","instantskip","ageres"
-	switch(payload.key){
-		case "instantnew":
-		 if(payload.enabled){
-			 if(!hasListener){
-				attatchVideoListener();
-				hasListener=true;
-			 }
-			 	console.log('Activated onvideoend() loop');
-				clearInterval(onvideoend);
-				setInterval(onvideoend, 2000);
-			}else{
-				clearInterval(onvideoend);
-			}
-		break;
-		case "instantskip":
-		 if(payload.enabled){
-			 
-			 	console.log('Activated cantPlay() loop');
-				clearInterval(cantPlay);
-				setInterval(cantPlay, 2000);
-			}else{
-				clearInterval(cantPlay);
-			}
-		break;
-		case "ageres":
-		 if(payload.enabled){
-			if(!injectedage)
-			{   injectedage = true;
-				location.pathname.indexOf('/embed/') === 0;
-				function createElement(tagName, options) {
-					const node = document.createElement(tagName);
-					options && Object.assign(node, options);
-					return node;
+	//"autoplay", "instantnew","autofullscreennew","instantskip","ageres","appenabled"
+	console.log('changed setting - 0');
+	if(payload.key!="appenabled"){
+		if(thisappisdiasables)return;
+		console.log('changed setting - 1');
+	}
+	console.log('changed setting - 2');
+		switch(payload.key){
+			case "instantnew":
+			 if(payload.enabled){
+				 if(!hasListener){
+					attatchVideoListener();
+				 }
+				 enabledinstanew = true;
+				 isnstantplayactive=true;
+					console.log('Activated onvideoend() loop');
+					clearInterval(intervalonvde);
+					intervalonvde = setInterval(onvideoend, 1000);
+				}else{
+					enabledinstanew=false
+					isnstantplayactive=false;
+					clearInterval(intervalonvde);
 				}
-				function injectScript() {
-					const nScript = createElement('script', { src: chrome.runtime.getURL('autoProxy.js') });
-					document.documentElement.append(nScript);
-					nScript.remove();
+			break;
+			case "instantskip":
+			 if(payload.enabled){
+				 enabledskip=true;
+					console.log('Activated cantPlay() loop');
+					clearInterval(intervalcntp);
+					intervalcntp = setInterval(cantPlay, 2000);
+				}else{
+					enabledskip=false;
+					clearInterval(intervalcntp);
 				}
-				injectScript();
-				
-				console.log('injected age script');
-				
+			break;
+			case "ageres":
+			 if(payload.enabled){
+				 enabledageres=true;
+				if(!injectedage)
+				{   injectedage = true;
+					location.pathname.indexOf('/embed/') === 0;
+					function createElement(tagName, options) {
+						const node = document.createElement(tagName);
+						options && Object.assign(node, options);
+						return node;
+					}
+					function injectScript() {
+						const nScript = createElement('script', { src: chrome.runtime.getURL('autoProxy.js') });
+						document.documentElement.append(nScript);
+						nScript.remove();
+					}
+					injectScript();
+					
+					console.log('injected age script');
+					
+				}
+			}else{
+				enabledageres=false;
 			}
-		}
+			break;
+				case "autofullscreennew":
+				
+			 if(payload.enabled){
+				doFullscreenenabed = true;
+				doFullscreen = true;
+				console.log('started not existing autofullscreen');
+			}else{
+				 doFullscreenenabed = false;
+				 doFullscreen =false;
+			}
 			
-		break;
+			break;
+			
+			case "appenabled":
+			 if(!payload.enabled){
+				 console.log('re-anable app');
+					intervalrandom = setInterval(randomizerloop, 2000);
+					intervalskipp = setInterval(skippopup, 2000);
+					thisappisdiasables = false;
+					
+
+				if (enabledinstanew){
+					
+					 if(!hasListener){
+						attatchVideoListener();
+					 }
+					 enabledinstanew = true;
+					 isnstantplayactive=true;
+						console.log('Activated onvideoend() loop');
+						clearInterval(intervalonvde);
+						intervalonvde = setInterval(onvideoend, 1000);
+					
+				}
+				if (enabledskip){
+							 enabledskip=true;
+					console.log('Activated cantPlay() loop');
+					clearInterval(intervalcntp);
+					intervalcntp = setInterval(cantPlay, 2000);
+				}
+				if (enabledageres){
+					 enabledageres=true;
+				if(!injectedage)
+				{   injectedage = true;
+					location.pathname.indexOf('/embed/') === 0;
+					function createElement(tagName, options) {
+						const node = document.createElement(tagName);
+						options && Object.assign(node, options);
+						return node;
+					}
+					function injectScript() {
+						const nScript = createElement('script', { src: chrome.runtime.getURL('autoProxy.js') });
+						document.documentElement.append(nScript);
+						nScript.remove();
+					}
+					injectScript();
+					
+					console.log('injected age script');
+					
+				}
+				}
+
+				if(!hasInjected){
+					console.log('injected()');
+					var script = document.createElement('script');
+					script.textContent = Injection;
+					(document.head || document.documentElement).appendChild(script);
+					script.remove();
+					hasInjected=true;
+				}
+				
+					
+				}else{
+					 console.log('stopping app');
+					 clearInterval(intervalskipp);
+					 clearInterval(intervalrandom);
+					 thisappisdiasables = true;
+					 
+					 isnstantplayactive=false;
+					 clearInterval(intervalonvde);
+					 clearInterval(intervalcntp);
+				}		
+			break;
 		}
-    }
+	}
 }
 setTimeout(()=>{
 	chrome.runtime.sendMessage({action: "PAGE_READY"},
@@ -72,7 +181,23 @@ setTimeout(()=>{
 		if (!/youtube\.com/.test(window.location.origin)) {
 		  return;
 		}
-		//"autoplay", "instantnew","autofullscreennew","instantskip","ageres"
+		//"autoplay", "instantnew","autofullscreennew","instantskip","ageres","appenabled"
+		
+		if(settings.appenabled){
+			thisappisdiasables = true;
+			return;
+		}else{
+			thisappisdiasables = false;
+				if(!hasInjected){
+						console.log('injected()');
+					var script = document.createElement('script');
+					script.textContent = Injection;
+					(document.head || document.documentElement).appendChild(script);
+					script.remove();
+					hasInjected=true;
+				}
+			
+		}
 		
 		if(settings.autoplay){
 			
@@ -84,32 +209,38 @@ setTimeout(()=>{
 		}
 
 		if(settings.instantnew){
+			enabledinstanew = true;
 		    if(!hasListener){
 				attatchVideoListener();
-				hasListener=true;
 			 }
+			 isnstantplayactive=true;
 				console.log('Activated onvideoend() loop');
-			 clearInterval(onvideoend);
-			setInterval(onvideoend, 2000);
+			 clearInterval(intervalonvde);
+			intervalonvde = setInterval(onvideoend, 1000);
 		}else{
-			 clearInterval(onvideoend);
+			 isnstantplayactive=false;
+			 clearInterval(intervalonvde);
 		}
         if(settings.instantskip){
+			enabledskip=true;
 				console.log('Activated cantPlay() loop');
-			 clearInterval(cantPlay);
-			setInterval(cantPlay, 2000);
+			 clearInterval(intervalcntp);
+			intervalcntp = setInterval(cantPlay, 2000);
 		}else{
-			 clearInterval(cantPlay);
+			 clearInterval(intervalcntp);
 		}
 
 		if(settings.autofullscreennew){
-			
+			 doFullscreenenabed = true;
+			 doFullscreen = true;
 				console.log('started not existing autofullscreen');
 		}else{
-			
+			 doFullscreenenabed = false;
+			 doFullscreen =false;
 		}
 		
 		if(settings.ageres){
+			enabledageres = true;
 			if(!injectedage)
 			{   injectedage = true;
 				location.pathname.indexOf('/embed/') === 0;
@@ -136,6 +267,7 @@ function autoStart(){
 	
 	console.log('----------Activated autoStart()');
 		try{
+			if(!doFullscreen)return;
 			//alert("autoplay");
 		    let current = document.querySelector('span.ytp-time-current').textContent;
 			if (current == "0:00") {
@@ -143,19 +275,27 @@ function autoStart(){
 			document.querySelector('video').autoplay = false;
 			document.querySelector('video').muted = true;
 			if(document.querySelector('video').paused)
-			document.querySelector('video').play();
+				document.querySelector('video').play();
 			document.querySelector('video').muted = false;
+			
 			//hack
 			setTimeout(()=>{
 				if(document.querySelector('video').paused)
-				document.querySelector('video').play();
-				
+					document.querySelector('video').play();
 			}, 300);
 			setTimeout(()=>{
-					if(document.querySelector('video').paused)
-				document.querySelector('video').play();
-				
-			}, 900);
+				if(document.querySelector('video').paused)
+					document.querySelector('video').play();
+			}, 1000);
+			setTimeout(()=>{
+				if(document.querySelector('video').paused)
+					document.querySelector('video').play();
+				if(doFullscreen){
+					try{
+						//to-do
+					}catch{}
+				}
+			}, 2000);
 			}
 		}catch{}
 }
@@ -165,8 +305,14 @@ function attatchVideoListener(){
 	console.log('---------Activated attatchVideoListener()');
 	try{
 		let video = document.querySelector('video');
+		
 		if(video!=null){
+			hasListener=true;
 			video.addEventListener('ended', (event) => {
+				
+				if(!doFullscreen&&((window.fullScreen) ||(window.innerWidth == screen.width && window.innerHeight == screen.height)))return;
+				
+				if(isnstantplayactive){
 				console.log('Video stopped either because 1) it was over, or 2) no further data is available.');
 				 try{
 					let d =document.querySelector(".ytp-autonav-endscreen-upnext-play-button");
@@ -175,14 +321,23 @@ function attatchVideoListener(){
 							window.location.assign(document.querySelector(".ytp-autonav-endscreen-upnext-play-button").href);		
 					}
 				}catch{}
+				}
 			});
 		}else{
-			setTimeout(attatchVideoListener, 200);
-			console.log('setTimeout(attatchVideoListener, 200);');
+			if(isnstantplayactive){
+				setTimeout(attatchVideoListener, 200);
+				console.log('setTimeout(attatchVideoListener, 200);');
+			}
 		}
+	}catch(e){
+		if(isnstantplayactive){
+			console.log('e');
+			console.log('setTimeout(attatchVideoListener, 2000);'); 
+			setTimeout(attatchVideoListener, 2000);
+		} 
+	
 	}
-	catch(e){ console.log('e'); console.log('setTimeout(attatchVideoListener, 2000);'); setTimeout(attatchVideoListener, 2000); }
-
+	
 }
 
 
@@ -199,6 +354,8 @@ function randomizerloop(){
 }
 function cantPlay(){
 
+				if(!doFullscreen&&((window.fullScreen) ||(window.innerWidth == screen.width && window.innerHeight == screen.height)))return;
+				
 	 try{
 		var error = document.querySelector('.ytp-error-content-wrap-reason');
 		if(error!=null){
@@ -236,12 +393,16 @@ function gotoRandomVideo(){
 
 function onvideoend(){
 	try{
+		if(!doFullscreen&&((window.fullScreen) ||(window.innerWidth == screen.width && window.innerHeight == screen.height)))return;
+				
 		let d =document.querySelector(".ytp-autonav-endscreen-upnext-play-button");
 		
 		let current = document.querySelector('span.ytp-time-current').textContent;
 			let duration = document.querySelector('span.ytp-time-duration').textContent;
 			//console.log(current +"-"+ duration+"=="+(current == duration));
 		if(d!=null&&d.href!=""){
+			
+			
 			//console.log('try video is ended new location');
 			if (current == duration) {
 				console.log('Video is ended');
@@ -271,12 +432,12 @@ function skippopup(){
 }
 	
 
-console.log('script nostop');
-
 var Injection =
   '(' +
   function () {
-    const tag = '[Youtube NoStop]';
+   const tag = '[Youtube NoStop]';
+   console.log('script nostop');
+
     const isYoutubeMusic = window.location.hostname === 'music.youtube.com';
 
     const popupEventNodename = isYoutubeMusic ? 'YTMUSIC-YOU-THERE-RENDERER' : 'YT-CONFIRM-DIALOG-RENDERER';
@@ -419,10 +580,3 @@ var Injection =
 
   } +
   ')();';
-if(!hasInjected){
-	var script = document.createElement('script');
-	script.textContent = Injection;
-	(document.head || document.documentElement).appendChild(script);
-	script.remove();
-	hasInjected=true;
-}

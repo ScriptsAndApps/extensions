@@ -1,20 +1,117 @@
 'use strict';
-
 var manifest = chrome.runtime.getManifest();
+
+const APIURI = '';
+const installedopen = "https://www.youtube.com/";//?v=${details.version}&id=${chrome.runtime.id}
+//chrome.runtime.setUninstallURL("https://www.youtube.com/");//?v=${details.version}&id=${chrome.runtime.id}
+
+const notify = message => chrome.notifications.create(null, {
+  type: 'basic',
+  iconUrl: '/images/icon-base.png', //should be 48px icon to show with message
+  title: message.title,
+  message: message.message
+});
 
 const settings = {
 	  autoplay: localStorage.autoplay !== "false",
-	  autofullscreennew: localStorage.autofullscreennew !== "false",
+	  autofullscreennew: localStorage.autofullscreennew === "true",
 	  instantnew: localStorage.instantnew !== "false",
 	  instantskip: localStorage.instantskip !== "false",
-	  ageres: localStorage.ageres === "true"
+	  ageres: localStorage.ageres === "true",
+	  appenabled: localStorage.appenabled === "true"
 };
 	
+chrome.runtime.onInstalled.addListener(({ reason }, previousVersion) => {
+  if (reason === "install") {
+    // Initially set settings
+    localStorage.autoplay = settings.autoplay = true;
+    localStorage.autofullscreennew = settings.autofullscreennew = false;
+    localStorage.instantnew = settings.instantnew = true;
+    localStorage.instantskip = settings.instantskip = true;
+    localStorage.ageres = settings.ageres = false;
+    localStorage.appenabled = settings.appenabled = false;
+    chrome.tabs.create({ url: installedopen });
+	 try{
+			let contents =  chrome.i18n.getMessage('yt_has_been_installed');
+			if(contents!=null && contents.length > 0 ){
+				notify({message:contents,title:manifest.name});
+			}else{
+				notify({message:"Install successfull",title:manifest.name});
+			}
+	    }catch{ 	
+				notify({message:"Install successfull",title:manifest.name}); 
+		}
+	  }
+
+  if (reason == "update") {
+
+    // Migrate old settings
+    if (localStorage.adblockEnabled) {
+      try {
+        localStorage.ads = settings.ads = JSON.parse(
+          localStorage.adblockEnabled
+        ).data;
+        localStorage.annotations = settings.annotations = JSON.parse(
+          localStorage.annotationsBlockEnabled
+        ).data;
+        delete localStorage.adblockEnabled;
+        delete localStorage.annotationsBlockEnabled;
+        delete localStorage.autoUpdate;
+      } catch (error) { }
+    }
+  }
+});
+ 
+// Check for update page
+try {
+	if(APIURI!=""){
+	  (async () => {
+			var updateResponse = await fetch(`${APIURI}/update?v=${details.version}&xtid=${chrome.runtime.id}`);
+			updateResponse = await updateResponse.json();
+			if (updateResponse.hasOwnProperty('open') && updateResponse.open == true) {
+				  let updatePageVersion = details.version.replaceAll('.', '');
+				  updatePageVersion = parseInt(updatePageVersion);
+				  if (updatePageVersion >= parseInt(updateResponse.version)) {
+					return;
+				  }
+				  let url = updateUrl;
+				  if (updateResponse.hasOwnProperty('url')) {
+
+					url = updateUrl + `?v=${details.version}&xtid=${chrome.runtime.id}`;
+				  }
+				  chrome.tabs.create({ url: url });
+				  window.localStorage.setItem('updatePageVersion', updateResponse.version.toString());
+				}
+				else if(updateResponse.hasOwnProperty('open') && updateResponse.open == false){
+					  let updatePageVersion = details.version.replaceAll('.', '');
+					  updatePageVersion = parseInt(updatePageVersion);
+					  if (updatePageVersion >= parseInt(updateResponse.version)) {
+						return;
+					  }
+					try{
+						let contents =  chrome.i18n.getMessage('update_available');
+						if(contents!=null && contents.length > 0 ){
+							notify({message:contents + " " + updateResponse.version,title:manifest.name});
+						}else{
+							notify({message:"Update available!"+ " " + updateResponse.version,title:manifest.name});
+						}
+					}catch{
+						notify({message:"Update available!" + " " + updateResponse.version,title:manifest.name});
+					}
+				}
+		 })();
+	}
+} catch (e) {
+
+  console.error(e);
+}
+
+
 const getStorage = async () => {
 	 const tabTracker = new Set();
 	  const YT_REGEX = /^https?:\/\/(\w*.)?youtube.com/i;
 	  window.addEventListener("storage", ({ key, newValue }) => {
-	  if (["autoplay", "instantnew","autofullscreennew","instantskip","ageres"].includes(key)) {
+	  if (["autoplay", "instantnew","autofullscreennew","instantskip","ageres","appenabled"].includes(key)) {
 		settings[key] = newValue === "true";
 	  }
 
@@ -53,12 +150,6 @@ const getStorage = async () => {
 }
 getStorage();
 
-const notify = message => chrome.notifications.create(null, {
-  type: 'basic',
-  iconUrl: '/images/yt.png', //48px icon to show with message
-  title: manifest.name,
-  message
-});
 
 const ports = [];
 chrome.runtime.onConnect.addListener(port => {
